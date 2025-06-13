@@ -1,17 +1,12 @@
-const tabs = document.querySelectorAll('.tab');
+const tabsContainer = document.querySelector('.tabs');
 const loading = document.getElementById('loading');
 const container = document.getElementById('recipesContainer');
+const BASE_URL = 'https://forkify-api.herokuapp.com/api/search?q=';
 
-const endpoints = {
-  pizza: 'https://forkify-api.herokuapp.com/api/search?q=pizza',
-  salad: 'https://forkify-api.herokuapp.com/api/search?q=salad',
-  beef: 'https://forkify-api.herokuapp.com/api/search?q=beef',
-  pasta: 'https://forkify-api.herokuapp.com/api/search?q=pasta'
-};
-
-function setActiveTab(tab) {
-  tabs.forEach(t => t.classList.remove('active'));
-  tab.classList.add('active');
+function setActiveTab(clickedTab) {
+  const tabs = tabsContainer.querySelectorAll('.tab');
+  tabs.forEach(tab => tab.classList.remove('active'));
+  clickedTab.classList.add('active');
 }
 
 function showLoading(show) {
@@ -36,20 +31,27 @@ function renderRecipes(recipes) {
 async function fetchRecipes(category) {
   showLoading(true);
   try {
-    const res = await fetch(endpoints[category]);
+    const res = await fetch(`${BASE_URL}${category}`);
     const data = await res.json();
-    renderRecipes(data.recipes);
-  } catch {
+    if (data.recipes && data.recipes.length > 0) {
+      renderRecipes(data.recipes);
+    } else {
+      container.innerHTML = '<p>No recipes found.</p>';
+    }
+  } catch (err) {
     container.innerHTML = '<p>Failed to load recipes.</p>';
+    console.error(err);
   } finally {
     showLoading(false);
   }
 }
 
-tabs.forEach(tab => {
-  tab.addEventListener('click', () => {
-    const category = tab.getAttribute('data-category');
-    setActiveTab(tab);
-    fetchRecipes(category);
-  });
+tabsContainer.addEventListener('click', (e) => {
+  const tab = e.target.closest('.tab');
+  if (!tab) return;
+  const category = tab.getAttribute('data-category');
+  setActiveTab(tab);
+  fetchRecipes(category);
 });
+
+document.querySelector('.tab[data-category="pizza"]').click();
